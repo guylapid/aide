@@ -364,6 +364,19 @@ impl<'t> TransformPathItem<'t> {
         self
     }
 
+    /// Transform all responses with specific `STATUS_CODE` for all operations.
+    pub fn transform_response_with<const STATUS_CODE: u16, F>(self, transform: F) -> Self
+    where
+        F: Fn(TransformResponse<WithoutExample>) -> TransformResponse<WithoutExample> + Clone,
+    {
+        for (_, op) in iter_operations_mut(self.path) {
+            let _ = TransformOperation::new(op)
+                .transform_response_with::<STATUS_CODE, F>(transform.clone());
+        }
+
+        self
+    }
+
     /// Set a default response for all operations in the
     /// path that do not already have one.
     #[tracing::instrument(skip_all)]
@@ -602,6 +615,29 @@ impl<'t> TransformOperation<'t> {
         F: FnOnce(TransformParameter<()>) -> TransformParameter<()>,
     {
         self.parameter(name, transform)
+    }
+
+    /// Transform all responses with specific `STATUS_CODE`.
+    pub fn transform_response_with<const STATUS_CODE: u16, F>(mut self, transform: F) -> Self
+    where
+        F: Fn(TransformResponse<WithoutExample>) -> TransformResponse<WithoutExample> + Clone,
+    {
+        let Some(responses) = &mut self.inner_mut().responses else {
+            return self;
+        };
+
+        for (_, response) in responses.responses.iter_mut().filter(|(s, _)| match s {
+            StatusCode::Code(s) => *s == STATUS_CODE,
+            StatusCode::Range(s) => *s == STATUS_CODE / 100,
+        }) {
+            let Some(response) = response.as_item_mut() else {
+                continue;
+            };
+
+            let _ = transform(TransformResponse::new(response));
+        }
+
+        self
     }
 
     /// Set a default response for the operation if
@@ -1017,6 +1053,9 @@ impl<'t, T> TransformParameter<'t, T> {
         self.param
     }
 }
+
+/// Marker type for disabling strongly typed examples.
+pub enum WithoutExample {}
 
 /// A transform helper that wraps [`Response`].
 ///

@@ -8,7 +8,6 @@ use aide::{
 use axum::{
     extract::{Path, State},
     http::StatusCode,
-    response::IntoResponse,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -93,11 +92,11 @@ struct SelectTodo {
 async fn get_todo(
     State(app): State<AppState>,
     Path(todo): Path<SelectTodo>,
-) -> impl IntoApiResponse {
+) -> Result<impl IntoApiResponse, impl IntoApiResponse> {
     if let Some(todo) = app.todos.lock().unwrap().get(&todo.id) {
-        Json(todo.clone()).into_response()
+        Ok(Json(todo.clone()))
     } else {
-        StatusCode::NOT_FOUND.into_response()
+        Err(StatusCode::NOT_FOUND)
     }
 }
 

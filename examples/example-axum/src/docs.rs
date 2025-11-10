@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use aide::{
     axum::{
-        routing::{get, get_with},
-        ApiRouter, IntoApiResponse,
+        routing::get_with,
+        ApiRouter,
     },
     openapi::OpenApi,
     redoc::Redoc,
@@ -32,7 +32,7 @@ pub fn docs_routes(state: AppState) -> ApiRouter {
             ),
             |p| p.security_requirement("ApiKey"),
         )
-        .route("/private/api.json", get(serve_docs))
+        .route("/private/api.json", axum::routing::get(serve_docs))
         .with_state(state);
 
     // Afterwards we disable response inference because
@@ -42,6 +42,6 @@ pub fn docs_routes(state: AppState) -> ApiRouter {
     router
 }
 
-async fn serve_docs(Extension(api): Extension<Arc<OpenApi>>) -> impl IntoApiResponse {
-    Json(api).into_response()
+async fn serve_docs(Extension(api): Extension<Arc<OpenApi>>) -> impl IntoResponse {
+    Json(api)
 }

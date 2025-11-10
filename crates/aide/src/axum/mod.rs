@@ -185,6 +185,7 @@ use axum::{
     routing::{IntoMakeService, Route},
     Router,
 };
+use axum::routing::MethodRouter;
 use indexmap::map::Entry;
 use indexmap::IndexMap;
 use tower_layer::Layer;
@@ -429,8 +430,8 @@ where
     ///
     /// This method accepts [`ApiMethodRouter`] but does not generate API documentation.
     #[tracing::instrument(skip_all)]
-    pub fn route(mut self, path: &str, method_router: impl Into<ApiMethodRouter<S, B>>) -> Self {
-        self.router = self.router.route(path, method_router.into().router);
+    pub fn route(mut self, path: &str, method_router: MethodRouter<S, B>) -> Self {
+        self.router = self.router.route(path, method_router.into());
         self
     }
 

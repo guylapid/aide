@@ -5,7 +5,9 @@ use crate::{
         Response, SchemaObject, StatusCode,
     },
     operation::{add_parameters, set_body},
+    OperationOutput,
 };
+use axum::extract::rejection::{BytesRejection, FormRejection, JsonRejection};
 use axum::extract::{
     BodyStream, ConnectInfo, Extension, Form, Host, Json, MatchedPath, OriginalUri, Path, Query,
     RawBody, RawQuery, State,
@@ -98,6 +100,34 @@ where
             },
         );
     }
+
+    fn inferred_early_responses(
+        ctx: &mut crate::gen::GenContext,
+        _operation: &mut Operation,
+    ) -> Vec<(Option<u16>, Response)> {
+        if ctx.all_error_responses {
+            vec![
+                (Some(http::StatusCode::BAD_REQUEST.as_u16()), Response {
+                    description: "Request body was not a valid JSON".to_string(),
+                    ..Default::default()
+                }),
+                (Some(http::StatusCode::PAYLOAD_TOO_LARGE.as_u16()), Response {
+                    description: "Failed to buffer the request body".to_string(),
+                    ..Default::default()
+                }),
+                (Some(http::StatusCode::UNSUPPORTED_MEDIA_TYPE.as_u16()), Response {
+                    description: "Expected request with `Content-Type: application/json`".to_string(),
+                    ..Default::default()
+                }),
+                (Some(http::StatusCode::UNPROCESSABLE_ENTITY.as_u16()), Response {
+                    description: "Request body did not match the expected schema".to_string(),
+                    ..Default::default()
+                }),
+            ]
+        } else {
+            Vec::new()
+        }
+    }
 }
 
 impl<T> OperationInput for Form<T>
@@ -131,6 +161,34 @@ where
                 extensions: IndexMap::default(),
             },
         );
+    }
+
+    fn inferred_early_responses(
+        ctx: &mut crate::gen::GenContext,
+        _operation: &mut Operation,
+    ) -> Vec<(Option<u16>, Response)> {
+        if ctx.all_error_responses {
+            vec![
+                (Some(http::StatusCode::BAD_REQUEST.as_u16()), Response {
+                    description: "Request body was not valid".to_string(),
+                    ..Default::default()
+                }),
+                (Some(http::StatusCode::PAYLOAD_TOO_LARGE.as_u16()), Response {
+                    description: "Failed to buffer the request body".to_string(),
+                    ..Default::default()
+                }),
+                (Some(http::StatusCode::UNSUPPORTED_MEDIA_TYPE.as_u16()), Response {
+                    description: "Form requests must have `Content-Type: application/x-www-form-urlencoded`".to_string(),
+                    ..Default::default()
+                }),
+                (Some(http::StatusCode::UNPROCESSABLE_ENTITY.as_u16()), Response {
+                    description: "Request body did not match the expected schema".to_string(),
+                    ..Default::default()
+                }),
+            ]
+        } else {
+            Vec::new()
+        }
     }
 }
 

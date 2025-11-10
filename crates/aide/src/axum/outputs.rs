@@ -1,10 +1,8 @@
 use crate::openapi::{MediaType, Operation, Response, SchemaObject};
 use axum::{
-    extract::rejection::{FormRejection, JsonRejection},
     response::{Html, Redirect},
     Form, Json,
 };
-use http::StatusCode;
 use indexmap::IndexMap;
 use schemars::{
     schema::{InstanceType, SingleOrVec},
@@ -44,17 +42,7 @@ where
         operation: &mut Operation,
     ) -> Vec<(Option<u16>, Response)> {
         if let Some(res) = Self::operation_response(ctx, operation) {
-            let success_response = [(Some(200), res)];
-
-            if ctx.all_error_responses {
-                [
-                    &success_response,
-                    JsonRejection::inferred_responses(ctx, operation).as_slice(),
-                ]
-                .concat()
-            } else {
-                Vec::from(success_response)
-            }
+            vec![(Some(200), res)]
         } else {
             Vec::new()
         }
@@ -92,17 +80,7 @@ where
         operation: &mut Operation,
     ) -> Vec<(Option<u16>, Response)> {
         if let Some(res) = Self::operation_response(ctx, operation) {
-            let success_response = [(Some(200), res)];
-
-            if ctx.all_error_responses {
-                [
-                    &success_response,
-                    FormRejection::inferred_responses(ctx, operation).as_slice(),
-                ]
-                .concat()
-            } else {
-                Vec::from(success_response)
-            }
+            vec![(Some(200), res)]
         } else {
             Vec::new()
         }
@@ -146,82 +124,6 @@ impl<T> OperationOutput for Html<T> {
             Vec::new()
         }
     }
-}
-
-impl OperationOutput for JsonRejection {
-    type Inner = Self;
-
-    fn operation_response(ctx: &mut GenContext, operation: &mut Operation) -> Option<Response> {
-        String::operation_response(ctx, operation)
-    }
-
-    fn inferred_responses(
-        ctx: &mut crate::gen::GenContext,
-        operation: &mut Operation,
-    ) -> Vec<(Option<u16>, Response)> {
-        if let Some(res) = Self::operation_response(ctx, operation) {
-            Vec::from([
-                // rejection_response(StatusCode::BAD_REQUEST, &res),
-                rejection_response(StatusCode::PAYLOAD_TOO_LARGE, &res),
-                rejection_response(StatusCode::UNSUPPORTED_MEDIA_TYPE, &res),
-                // rejection_response(StatusCode::UNPROCESSABLE_ENTITY, &res),
-            ])
-        } else {
-            Vec::new()
-        }
-    }
-}
-
-impl OperationOutput for FormRejection {
-    type Inner = Self;
-
-    fn operation_response(ctx: &mut GenContext, operation: &mut Operation) -> Option<Response> {
-        String::operation_response(ctx, operation)
-    }
-
-    fn inferred_responses(
-        ctx: &mut crate::gen::GenContext,
-        operation: &mut Operation,
-    ) -> Vec<(Option<u16>, Response)> {
-        if let Some(res) = Self::operation_response(ctx, operation) {
-            Vec::from([
-                // rejection_response(StatusCode::BAD_REQUEST, &res),
-                rejection_response(StatusCode::PAYLOAD_TOO_LARGE, &res),
-                rejection_response(StatusCode::UNSUPPORTED_MEDIA_TYPE, &res),
-                // rejection_response(StatusCode::UNPROCESSABLE_ENTITY, &res),
-            ])
-        } else {
-            Vec::new()
-        }
-    }
-}
-
-#[cfg(feature = "jwt_authorizer")]
-impl OperationOutput for jwt_authorizer::AuthError {
-    type Inner = jwt_authorizer::AuthError;
-
-    fn operation_response(ctx: &mut GenContext, operation: &mut Operation) -> Option<Response> {
-        String::operation_response(ctx, operation)
-    }
-
-    fn inferred_responses(
-        ctx: &mut crate::gen::GenContext,
-        operation: &mut Operation,
-    ) -> Vec<(Option<u16>, Response)> {
-        if let Some(res) = Self::operation_response(ctx, operation) {
-            Vec::from([
-                rejection_response(StatusCode::UNAUTHORIZED, &res),
-                rejection_response(StatusCode::INTERNAL_SERVER_ERROR, &res),
-                rejection_response(StatusCode::FORBIDDEN, &res),
-            ])
-        } else {
-            Vec::new()
-        }
-    }
-}
-
-fn rejection_response(status_code: StatusCode, response: &Response) -> (Option<u16>, Response) {
-    (Some(status_code.as_u16()), response.clone())
 }
 
 impl OperationOutput for Redirect {
