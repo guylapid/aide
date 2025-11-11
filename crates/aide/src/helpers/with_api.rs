@@ -122,8 +122,6 @@ impl<T> OperationOutput for WithApi<T>
 where
     T: OperationOutput + ApiOverride,
 {
-    type Inner = T::Inner;
-
     fn operation_response(ctx: &mut GenContext, operation: &mut Operation) -> Option<Response> {
         T::operation_response(ctx, operation)
     }

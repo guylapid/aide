@@ -9,9 +9,6 @@ use crate::openapi::{
 };
 use crate::Error;
 
-#[cfg(feature = "macros")]
-pub use aide_macros::OperationIo;
-
 /// A trait for operation input schema generation.
 ///
 /// This must be implemented for all extractors
@@ -84,7 +81,7 @@ macro_rules! impl_operation_input {
                     $ty::operation_input(ctx, operation);
                 )*
             }
-            
+
             fn inferred_early_responses(
                 ctx: &mut GenContext,
                 operation: &mut Operation,
@@ -100,6 +97,39 @@ macro_rules! impl_operation_input {
 }
 
 all_the_tuples!(impl_operation_input);
+
+macro_rules! impl_operation_output {
+    ( $($ty:ident),* $(,)? ) => {
+        #[allow(non_snake_case)]
+        impl<$($ty,)*> OperationOutput for ($($ty,)*)
+        where
+            $( $ty: OperationOutput, )*
+        {
+            fn operation_response(ctx: &mut GenContext, operation: &mut Operation) -> Option<Response> {
+                let mut response = None;
+                $(
+                     if let Some(r) = $ty::operation_response(ctx, operation) {
+                         response = Some(r);
+                     }
+                )*
+                response
+            }
+
+            fn inferred_responses(
+                ctx: &mut GenContext,
+                operation: &mut Operation,
+            ) -> Vec<(Option<u16>, Response)> {
+                let mut responses = Vec::new();
+                $(
+                    responses.extend($ty::inferred_responses(ctx, operation));
+                )*
+                responses
+            }
+        }
+    };
+}
+
+all_the_tuples!(impl_operation_output);
 
 #[doc(hidden)]
 pub trait OperationHandler<I: OperationInput, O: OperationOutput> {}
@@ -138,14 +168,6 @@ all_the_tuples!(impl_operation_handler);
 /// can be used to implement this trait.
 #[allow(unused_variables)]
 pub trait OperationOutput {
-    /// The type that is used in examples.
-    ///
-    /// # Examples
-    ///
-    /// In case of `Json<T>`, this should be `T`,
-    /// whereas for `String` it should be `Self`.
-    type Inner;
-
     /// Return a response documentation for this type,
     /// alternatively modify the operation if required.
     ///

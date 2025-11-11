@@ -15,8 +15,6 @@ impl<T> OperationOutput for Json<T>
 where
     T: JsonSchema,
 {
-    type Inner = T;
-
     fn operation_response(ctx: &mut GenContext, _operation: &mut Operation) -> Option<Response> {
         let mut schema = ctx.schema.subschema_for::<T>().into_object();
 
@@ -53,8 +51,6 @@ impl<T> OperationOutput for Form<T>
 where
     T: JsonSchema,
 {
-    type Inner = T;
-
     fn operation_response(ctx: &mut GenContext, _operation: &mut Operation) -> Option<Response> {
         let mut schema = ctx.schema.subschema_for::<T>().into_object();
 
@@ -88,8 +84,6 @@ where
 }
 
 impl<T> OperationOutput for Html<T> {
-    type Inner = String;
-
     fn operation_response(_ctx: &mut GenContext, _operation: &mut Operation) -> Option<Response> {
         Some(Response {
             description: "HTML content".into(),
@@ -127,7 +121,6 @@ impl<T> OperationOutput for Html<T> {
 }
 
 impl OperationOutput for Redirect {
-    type Inner = Self;
     fn operation_response(_ctx: &mut GenContext, _operation: &mut Operation) -> Option<Response> {
         Some(Response {
             description: "A redirect to the described URL".to_string(),

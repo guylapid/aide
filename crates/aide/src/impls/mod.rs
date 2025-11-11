@@ -1,4 +1,4 @@
-use std::{borrow::Cow, convert::Infallible, rc::Rc, sync::Arc};
+use std::{borrow::Cow, rc::Rc, sync::Arc};
 
 use crate::{
     openapi::{MediaType, Operation, RequestBody, Response},
@@ -39,8 +39,6 @@ where
     T: OperationOutput,
     E: OperationOutput,
 {
-    type Inner = T;
-
     fn operation_response(
         ctx: &mut crate::gen::GenContext,
         operation: &mut Operation,
@@ -96,8 +94,6 @@ impl<T> OperationOutput for Option<T>
 where
     T: OperationOutput,
 {
-    type Inner = <T as OperationOutput>::Inner;
-
     fn operation_response(
         ctx: &mut crate::gen::GenContext,
         operation: &mut Operation,
@@ -126,8 +122,6 @@ impl<T> OperationOutput for Box<T>
 where
     T: OperationOutput,
 {
-    type Inner = <T as OperationOutput>::Inner;
-
     fn operation_response(
         ctx: &mut crate::gen::GenContext,
         operation: &mut Operation,
@@ -156,8 +150,6 @@ impl<T> OperationOutput for Rc<T>
 where
     T: OperationOutput,
 {
-    type Inner = <T as OperationOutput>::Inner;
-
     fn operation_response(
         ctx: &mut crate::gen::GenContext,
         operation: &mut Operation,
@@ -186,8 +178,6 @@ impl<T> OperationOutput for Arc<T>
 where
     T: OperationOutput,
 {
-    type Inner = <T as OperationOutput>::Inner;
-
     fn operation_response(
         ctx: &mut crate::gen::GenContext,
         operation: &mut Operation,
@@ -222,8 +212,6 @@ impl OperationInput for String {
 }
 
 impl OperationOutput for String {
-    type Inner = Self;
-
     fn operation_response(
         _ctx: &mut crate::gen::GenContext,
         _operation: &mut Operation,
@@ -251,8 +239,6 @@ impl OperationOutput for String {
 }
 
 impl<'a> OperationOutput for &'a str {
-    type Inner = Self;
-
     fn operation_response(
         ctx: &mut crate::gen::GenContext,
         operation: &mut Operation,
@@ -269,8 +255,6 @@ impl<'a> OperationOutput for &'a str {
 }
 
 impl<'a> OperationOutput for Cow<'a, str> {
-    type Inner = Self;
-
     fn operation_response(
         ctx: &mut crate::gen::GenContext,
         operation: &mut Operation,
@@ -287,8 +271,6 @@ impl<'a> OperationOutput for Cow<'a, str> {
 }
 
 impl OperationOutput for () {
-    type Inner = Self;
-
     fn operation_response(
         _ctx: &mut crate::gen::GenContext,
         _operation: &mut Operation,
@@ -333,8 +315,6 @@ impl OperationInput for Vec<u8> {
 }
 
 impl OperationOutput for Vec<u8> {
-    type Inner = Self;
-
     fn operation_response(
         _ctx: &mut crate::gen::GenContext,
         _operation: &mut Operation,
@@ -371,8 +351,6 @@ impl<'a> OperationInput for &'a [u8] {
 }
 
 impl<'a> OperationOutput for &'a [u8] {
-    type Inner = Self;
-
     fn operation_response(
         ctx: &mut crate::gen::GenContext,
         operation: &mut Operation,
@@ -398,8 +376,6 @@ impl<'a> OperationInput for Cow<'a, [u8]> {
 }
 
 impl<'a> OperationOutput for Cow<'a, [u8]> {
-    type Inner = Self;
-
     fn operation_response(
         ctx: &mut crate::gen::GenContext,
         operation: &mut Operation,
@@ -413,48 +389,4 @@ impl<'a> OperationOutput for Cow<'a, [u8]> {
     ) -> Vec<(Option<u16>, Response)> {
         Vec::<u8>::inferred_responses(ctx, operation)
     }
-}
-
-// Empty blanket impls for tuples.
-//
-// In axum these are commonly (StatusCode, Value),
-// we keep it more broad as other frameworks
-// could implement (u16, Value) instead for example,
-// or any combination that is compatible, like:
-// - `(StatusCode, impl IntoResponse)`
-// - `(Parts, impl IntoResponse)`
-// - `(Response<()>, impl IntoResponse)`
-// - `(T1, .., Tn, impl IntoResponse)` where `T1` to `Tn` all implement `IntoResponseParts`.
-// - `(StatusCode, T1, .., Tn, impl IntoResponse)` where `T1` to `Tn` all implement `IntoResponseParts`.
-// - `(Parts, T1, .., Tn, impl IntoResponse)` where `T1` to `Tn` all implement `IntoResponseParts`.
-// - `(Response<()>, T1, .., Tn, impl IntoResponse)` where `T1` to `Tn` all implement `IntoResponseParts`.
-
-impl<T1, T2> OperationOutput for (T1, T2) {
-    type Inner = Infallible;
-}
-impl<T1, T2, T3> OperationOutput for (T1, T2, T3) {
-    type Inner = Infallible;
-}
-impl<T1, T2, T3, T4> OperationOutput for (T1, T2, T3, T4) {
-    type Inner = Infallible;
-}
-impl<T1, T2, T3, T4, T5> OperationOutput for (T1, T2, T3, T4, T5) {
-    type Inner = Infallible;
-}
-impl<T1, T2, T3, T4, T5, T6> OperationOutput for (T1, T2, T3, T4, T5, T6) {
-    type Inner = Infallible;
-}
-impl<T1, T2, T3, T4, T5, T6, T7> OperationOutput for (T1, T2, T3, T4, T5, T6, T7) {
-    type Inner = Infallible;
-}
-impl<T1, T2, T3, T4, T5, T6, T7, T8> OperationOutput for (T1, T2, T3, T4, T5, T6, T7, T8) {
-    type Inner = Infallible;
-}
-impl<T1, T2, T3, T4, T5, T6, T7, T8, T9> OperationOutput for (T1, T2, T3, T4, T5, T6, T7, T8, T9) {
-    type Inner = Infallible;
-}
-impl<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> OperationOutput
-    for (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)
-{
-    type Inner = Infallible;
 }

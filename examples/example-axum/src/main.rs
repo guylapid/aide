@@ -5,17 +5,15 @@ use aide::{
     openapi::{OpenApi, Tag},
     transform::TransformOpenApi,
 };
-use axum::{http::StatusCode, Extension};
+use axum::{http::StatusCode, Extension, Json};
 use docs::docs_routes;
 use errors::AppError;
-use extractors::Json;
 use state::AppState;
 use todos::routes::todo_routes;
 use uuid::Uuid;
 
 pub mod docs;
 pub mod errors;
-pub mod extractors;
 pub mod state;
 pub mod todos;
 

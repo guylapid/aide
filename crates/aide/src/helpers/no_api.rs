@@ -39,9 +39,7 @@ impl<T> NoApi<T> {
 
 impl<T> OperationInput for NoApi<T> {}
 
-impl<T> OperationOutput for NoApi<T> {
-    type Inner = ();
-}
+impl<T> OperationOutput for NoApi<T> {}
 
 #[cfg(feature = "axum")]
 mod axum {

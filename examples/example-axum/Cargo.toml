@@ -9,7 +9,6 @@ aide = { path = "../../crates/aide", features = [
     "redoc",
     "axum",
     "axum-extra",
-    "macros",
 ] }
 async-trait = "0.1.57"
 axum = { version = "0.6.0", features = ["macros"] }

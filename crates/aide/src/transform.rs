@@ -173,7 +173,7 @@ impl<'t> TransformOpenApi<'t> {
     pub fn default_response_with<R, F>(self, transform: F) -> Self
     where
         R: OperationOutput,
-        F: Fn(TransformResponse<R::Inner>) -> TransformResponse<R::Inner> + Clone,
+        F: Fn(TransformResponse) -> TransformResponse + Clone,
     {
         if let Some(p) = &mut self.api.paths {
             for (_, p) in &mut p.paths {
@@ -367,7 +367,7 @@ impl<'t> TransformPathItem<'t> {
     /// Transform all responses with specific `STATUS_CODE` for all operations.
     pub fn transform_response_with<const STATUS_CODE: u16, F>(self, transform: F) -> Self
     where
-        F: Fn(TransformResponse<WithoutExample>) -> TransformResponse<WithoutExample> + Clone,
+        F: Fn(TransformResponse) -> TransformResponse + Clone,
     {
         for (_, op) in iter_operations_mut(self.path) {
             let _ = TransformOperation::new(op)
@@ -404,7 +404,7 @@ impl<'t> TransformPathItem<'t> {
     pub fn default_response_with<R, F>(self, transform: F) -> Self
     where
         R: OperationOutput,
-        F: Fn(TransformResponse<R::Inner>) -> TransformResponse<R::Inner> + Clone,
+        F: Fn(TransformResponse) -> TransformResponse + Clone,
     {
         in_context(|ctx| ctx.show_error = filter_no_duplicate_response);
 
@@ -620,7 +620,7 @@ impl<'t> TransformOperation<'t> {
     /// Transform all responses with specific `STATUS_CODE`.
     pub fn transform_response_with<const STATUS_CODE: u16, F>(mut self, transform: F) -> Self
     where
-        F: Fn(TransformResponse<WithoutExample>) -> TransformResponse<WithoutExample> + Clone,
+        F: Fn(TransformResponse) -> TransformResponse + Clone,
     {
         let Some(responses) = &mut self.inner_mut().responses else {
             return self;
@@ -678,7 +678,7 @@ impl<'t> TransformOperation<'t> {
     pub fn default_response_with<R, F>(self, transform: F) -> Self
     where
         R: OperationOutput,
-        F: FnOnce(TransformResponse<R::Inner>) -> TransformResponse<R::Inner>,
+        F: FnOnce(TransformResponse) -> TransformResponse,
     {
         if self.operation.responses.is_none() {
             self.operation.responses = Some(Default::default());
@@ -744,7 +744,7 @@ impl<'t> TransformOperation<'t> {
     pub fn response_with<const N: u16, R, F>(self, transform: F) -> Self
     where
         R: OperationOutput,
-        F: FnOnce(TransformResponse<R::Inner>) -> TransformResponse<R::Inner>,
+        F: FnOnce(TransformResponse) -> TransformResponse,
     {
         if self.operation.responses.is_none() {
             self.operation.responses = Some(Default::default());
@@ -814,7 +814,7 @@ impl<'t> TransformOperation<'t> {
     pub fn response_range_with<const N: u16, R, F>(self, transform: F) -> Self
     where
         R: OperationOutput,
-        F: FnOnce(TransformResponse<R::Inner>) -> TransformResponse<R::Inner>,
+        F: FnOnce(TransformResponse) -> TransformResponse,
     {
         if self.operation.responses.is_none() {
             self.operation.responses = Some(Default::default());
@@ -1054,27 +1054,19 @@ impl<'t, T> TransformParameter<'t, T> {
     }
 }
 
-/// Marker type for disabling strongly typed examples.
-pub enum WithoutExample {}
-
 /// A transform helper that wraps [`Response`].
-///
-/// An additional type is provided for strongly-typed
-/// examples.
 #[must_use]
-pub struct TransformResponse<'t, T> {
+pub struct TransformResponse<'t> {
     pub(crate) hidden: bool,
     pub(crate) response: &'t mut Response,
-    _t: PhantomData<T>,
 }
 
-impl<'t, T> TransformResponse<'t, T> {
+impl<'t> TransformResponse<'t> {
     /// Create a new transform helper.
     pub fn new(response: &'t mut Response) -> Self {
         Self {
             hidden: false,
             response,
-            _t: PhantomData,
         }
     }
 
@@ -1101,12 +1093,9 @@ impl<'t, T> TransformResponse<'t, T> {
     /// Provide or override an example for the response.
     #[tracing::instrument(skip_all)]
     #[allow(clippy::missing_panics_doc)]
-    pub fn example(self, example: impl Into<T>) -> Self
+    pub fn example(self, example: impl Serialize) -> Self
     where
-        T: Serialize,
     {
-        let example = example.into();
-
         for (_, c) in &mut self.response.content {
             c.example = Some(serde_json::to_value(&example).unwrap());
         }

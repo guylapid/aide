@@ -38,8 +38,6 @@ impl OperationInput for BytesMut {
 }
 
 impl OperationOutput for Bytes {
-    type Inner = Self;
-
     fn operation_response(
         _ctx: &mut crate::gen::GenContext,
         _operation: &mut Operation,
@@ -67,8 +65,6 @@ impl OperationOutput for Bytes {
 }
 
 impl OperationOutput for BytesMut {
-    type Inner = Self;
-
     fn operation_response(
         ctx: &mut crate::gen::GenContext,
         operation: &mut Operation,

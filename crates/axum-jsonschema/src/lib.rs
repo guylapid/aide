@@ -247,8 +247,6 @@ mod impl_aide {
     where
         T: JsonSchema,
     {
-        type Inner = <axum::Json<T> as aide::OperationOutput>::Inner;
-
         fn operation_response(
             ctx: &mut aide::gen::GenContext,
             op: &mut aide::openapi::Operation,

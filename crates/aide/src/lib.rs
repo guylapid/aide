@@ -141,6 +141,3 @@ pub use helpers::{no_api::NoApi, with_api::ApiOverride, with_api::WithApi};
 
 pub use error::Error;
 pub use operation::{OperationInput, OperationOutput};
-
-#[cfg(feature = "macros")]
-pub use aide_macros::OperationIo;

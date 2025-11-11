@@ -9,6 +9,4 @@ impl OperationInput for Version {}
 impl OperationInput for HeaderMap {}
 impl OperationInput for Parts {}
 
-impl OperationOutput for StatusCode {
-    type Inner = Self;
-}
+impl OperationOutput for StatusCode {}

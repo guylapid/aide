@@ -1,19 +1,13 @@
-use aide::{
-    axum::{
-        routing::{get_with, post_with, put_with},
-        ApiRouter, IntoApiResponse,
-    },
-    transform::TransformOperation,
-};
-use axum::{
-    extract::{Path, State},
-    http::StatusCode,
-};
+use aide::{axum::{
+    routing::{get_with, post_with, put_with},
+    ApiRouter, IntoApiResponse,
+}, transform::TransformOperation, NoApi};
+use axum::{extract::{Path, State}, http::StatusCode, Json};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{extractors::Json, state::AppState};
+use crate::state::AppState;
 
 use super::TodoItem;
 
@@ -58,7 +52,6 @@ async fn create_todo(
             id,
         },
     );
-
     (StatusCode::CREATED, Json(TodoCreated { id }))
 }
 
@@ -96,7 +89,7 @@ async fn get_todo(
     if let Some(todo) = app.todos.lock().unwrap().get(&todo.id) {
         Ok(Json(todo.clone()))
     } else {
-        Err(StatusCode::NOT_FOUND)
+        Err(NoApi(StatusCode::NOT_FOUND))
     }
 }
 
@@ -117,9 +110,9 @@ async fn delete_todo(
     Path(todo): Path<SelectTodo>,
 ) -> impl IntoApiResponse {
     if app.todos.lock().unwrap().remove(&todo.id).is_some() {
-        StatusCode::NO_CONTENT
+        NoApi(StatusCode::NO_CONTENT)
     } else {
-        StatusCode::NOT_FOUND
+        NoApi(StatusCode::NOT_FOUND)
     }
 }
 
@@ -135,9 +128,9 @@ async fn complete_todo(
 ) -> impl IntoApiResponse {
     if let Some(todo) = app.todos.lock().unwrap().get_mut(&todo.id) {
         todo.complete = true;
-        StatusCode::NO_CONTENT
+        NoApi(StatusCode::NO_CONTENT)
     } else {
-        StatusCode::NOT_FOUND
+        NoApi(StatusCode::NOT_FOUND)
     }
 }
 

@@ -8,9 +8,9 @@ use aide::{
     openapi::OpenApi,
     redoc::Redoc,
 };
-use axum::{response::IntoResponse, Extension};
+use axum::{response::IntoResponse, Extension, Json};
 
-use crate::{extractors::Json, state::AppState};
+use crate::state::AppState;
 
 pub fn docs_routes(state: AppState) -> ApiRouter {
     // We infer the return types for these routes
